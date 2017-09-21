@@ -1,110 +1,107 @@
-
 import React from "react";
 import ReactDOM from "react-dom";
-// use before, after, body structured programming approach to initialise 
-// the game, in javascript this corresponds to try-catch-finally structure 
-module.exports = (function () {
+
+(function () {
   var { render } = ReactDOM;
 
-  var settings = {
-    _DIM: 3,
-    _bt: {},
-    _layout: []
-  };
+  var APP = APP || {}; 
+  APP.Game = APP.Game || {};
+  APP.Game.View = (function GameView( dim = 3 ) {
+    var _dim = dim;
+    // build a function that construction automatically the table with just
+    // few argument, dimension of the table and the content of a cell 
 
-  /*
-    UTILITY FUNCTIONS
-  */
-  function Observer() {
-    this.observers = [];
-  }
-
-  Observer.prototype.add = function ( obj ) {
-    return this.observers.push(obj);
-  };
-  Observer.prototype.notify = function ( param ) {
-    //console.log("fired");
-    for (let i = 0; i < this.observers.length; i++) {
-      this.observers[i].update( param );
+    function createButton() {
+      return <button className="bt"></button>;
     }
-  };
 
-  /*
-   HELPER FUNCTIONS 
-  */
+    /**
+     * @function createTableCell
+     * @param {*} component a valid react UI component
+     * @return a react td UI component with the parameter component as child
+     */
 
-  function createButton() {
-    return <button className="bt"></button>;
-  }
-
-  settings._bt = createButton(); // step one ; 
-
-  var myObject = {
-    update: function () {
-      console.log("fired");
+    function creatTableCell( component ) {
+      // not main, footer, aside, header, all h* elements
+      return React.createElement( "td", { className: "tb-cell" }, component );
     }
-  };
 
-  var SingleBoard = (function CreateSingleGameBoard() {
-    var _board;
-    const _bt = settings._bt;
-    var _props;
+    /**
+     * @function createTableRow
+     * @param {*} component component a valid react UI component
+     * @return a react tr component 
+     * @private
+     * 
+     */
 
-    function initialise2DBoard() {
+    function createTableRow( component ) {
+      //component = component.map(element => )
+      // checking that component function should return a td component
+      return React.createElement( "tr", { className: "tb-cell" }, component );
+    } 
 
-      var _2DBoard = [];
-      // check to reduce the looping   
-      for (let i = 0; i < settings._DIM; i++) {
-        _2DBoard.push([]);
+    /**
+     * @function createViewTable
+     * 
+     */
 
-        for (let j = 0; j < settings._DIM; j++) {
+    function createTable( fns, init, dim = 1 ) {
+      //var listFunction = [ creatTableCell, createViewRow];
 
-          let _object = new Observer();
-          let _subject = Object.create(Observer.prototype);
+      if (!Array.isArray( fns )) {
+        throw ( "Type Error: Invalid first argument. Expecting an array" );
+      }
 
-          _2DBoard[i].push(Object.assign(_subject, _object, _bt));
-          _props = Object.assign({}, _2DBoard[i][j].props,{onClick: function () {_2DBoard[i][i].notify(); }});
-          _2DBoard[i][j] = Object.assign(_2DBoard[i][j], { props: _props });
-        
+      fns.forEach(
+        fn => {
+          if ( typeof fn !== "function" ) {
+            throw ( "Type Error: Invalid element in first argument (array): " +
+            "it should contain only function elements" );
+          }
+        });
+
+      if ( init === "undefined" || typeof init !== "function" ) {
+        init = () => {};
+      }
+
+      /**
+     * @function createArray
+     * @param { Number } dim the lenght of return array
+     * @param { Function || class } component a react component type 
+     * @return { Array } an array of react component constructor function 
+     * @private
+     */
+      function createArray( dim, component ) {
+        if (!React.isValidElement( component )) {
+          const message = "Type error: second argument should be a valid react component constructor," +
+            " function preferably";
+          throw ( message );
         }
 
+        return (new Array( dim )).fill( 1 ).map(( val, index ) => React.cloneElement(
+          component,
+          { key: index }
+        ));
       }
 
-      return _2DBoard;
+
+      return fns.reduce(( prev, next ) => createArray( dim, next( prev )), init());
     }
 
-    return function initialiseSingleBoard() {
-      if (!_board) {
-        _board = initialise2DBoard();
-      }
-      return _board;
-    };
+    //var _table = createTable([creatTableCell,createTableRow], createButton, _dim);
+    //console.log(test);
 
+    render(
+      <table>
+        <tbody>
+          { createTable([creatTableCell,createTableRow], createButton, _dim ) }
+        </tbody>
+      </table>,
+      document.getElementById("app")
+    );
   })();
 
-  settings._layout = SingleBoard(); // step two ; 
-  settings._layout.forEach(function(line) {
-    line.forEach(function(bt) {bt.add(myObject);});
-  }); // step three 
- 
 
-  /*
-   wrapLayoutNicely helps separate model from view
-  */
-  function wrapLayoutNicely() {
-    //onsole.log(settings._layout);
-    var wrappeLayout = settings._layout.map((line, i) => <tr key={i}>{
-      line.map((button, j) => <td key={[i, j].join("")}> {button}</td>)
-    }</tr>);
-    return wrappeLayout;
-  }
 
-  render(
-    <table>
-      <tbody>
-        { wrapLayoutNicely() }
-      </tbody>
-    </table>,
-    document.getElementById("app")
-  );
-})(); 
+})();
+
