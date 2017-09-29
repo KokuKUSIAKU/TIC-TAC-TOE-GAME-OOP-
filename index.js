@@ -1,18 +1,11 @@
-
 // this script is overheaded intentionnally !!
-
 import React from "react";
 import ReactDOM from "react-dom";
 
 (function () {
   var { render } = ReactDOM;
   var gameBoard = document.getElementById("app");
-  var selection = {
-    selectByClick: "selectByClick",
-    selectByFocus: "selectByFocus"
-  };
-  var APP = APP || {};
-  APP.Game = APP.Game || {};
+  var view;
 
   function Observer() {
     this.observers = [];
@@ -28,9 +21,8 @@ import ReactDOM from "react-dom";
     }
   };
 
-
-  APP.Game.View = (function GameView(dim = 3) {
-    var _dim = dim, _table;
+  view = (function GameView(dim = 3) {
+    var _dim = dim;
 
     function createButton() {
       return React.createElement("button", { className: "bt" });
@@ -122,17 +114,27 @@ import ReactDOM from "react-dom";
   *    PLAYERS 
   */
 
-  function Player() { }
+  function Player() {
+    // there is no control on symbol; make sure to assign a valid react component as symbol; 
+    var _symbol = "";
+    Object.defineProperty(this, "symbol",
+      {
+        set: function setSymbol(symbol) { _symbol = symbol; },
+        get: function getSymbol() { return _symbol; }
+      });
+  }
   /** think about moving update and select method into prototype which may be 
    * a promise wraypper, event a promise wrapper should be a method of player that allow 
    *  a player to wrap any of its normal method into a promise 
   */
   Player.prototype = {
     play: function play() {
-      return this.update(this._gameboard); // big promise 
+      return this.update(this._gameboard, this._symbol); // big promise 
     }
   };
 
+  // you can mode the update function in the prototype chain 
+  // with the promise chain to uniform the process perfomed by each player when playing 
   /**
    * 
    *********************************************************/
@@ -141,30 +143,41 @@ import ReactDOM from "react-dom";
   Computer.prototype.constructor = Computer;
   Computer.prototype.update = function () {
     //console.log("Comuter updating");
-    return this.select().then(function onFulfilled( /*position */) {
-      // do something here with position; 
-      var _p = new Promise(function (res) {
-        setTimeout(function personUpdate() {
-          console.log("Computer update promise");
-          res();
-        }, 1000);
+    // now same code for person, move to Player object then ; 
+    const ctx = this;
+    return this.select().then(function onFulfilled(element) {
+      var _p = new Promise(function resolver(res) {
+        render(
+          ctx.symbol,
+          element
+        );
+        res(element);
       });
       return _p;
-
     });
   };
   Computer.prototype.select = function () {
-    //console.log("Computer selecting");
-    // this.methodes[this.selectType]();
+    //const ctx = this; 
+
     return new Promise(function resolver(resolve) {
-      /*setTimeout(function personSelect() {
-        console.log("Person prototype select");
-        //this.methodes[this.selectType]();
-        resolve();
-      }, 1000);*/
+      var gameBoardButtons = [], index;
+
+      // a bit long all these children 
+      // cache this !!! 
+      Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
+        Array.from(line.children).forEach(function gameCell(cell) {
+          gameBoardButtons.push(cell.children);
+        });
+      });
+
+      while (!index) {
+        let _index = parseInt(Math.random() * gameBoardButtons.length);
+        if (!gameBoardButtons[_index].children) { index = _index; }
+      }
+
+      // insert a delay in the computer action 
       setTimeout(function personSelect() {
-        console.log("computer Selection function called");
-        resolve();
+        resolve(gameBoardButtons[index][0]);
       }, 1000);
     });
   };
@@ -173,27 +186,23 @@ import ReactDOM from "react-dom";
    * 
    *********************************************************/
   function Person() { }
-
   Person.prototype = new Player;
   Person.prototype.constructor = Person;
   Person.prototype.update = function () {
+    const ctx = this;
     return this.select().then(function onFulfilled(element) {
       var _p = new Promise(function resolver(res) {
-        // keep it for development now, 
-        // update puting real symbol on the board later
-        setTimeout(function personUpdate() {
-          element.innerHTML = "You";
-          res(element);
-        }, 2000);
+        render(
+          ctx.symbol,
+          element
+        );
+        res(element);
       });
       return _p;
     });
   };
-
-  // return a promise for a click event to be handle and continue the party 
   Person.prototype.select = function () {
     return new Promise(function resolver(resolve) {
-      // keep clickHandler here, though i am not sure it is the right place 
       function clickHandler(e) {
         resolve(e.target);
       }
@@ -225,22 +234,67 @@ import ReactDOM from "react-dom";
 
   Party.prototype.run = function runParty() {
     return this.players.reduce(function (promise, player) {
-      return promise.then(function onFulfilled(element) {
-        // make sure that every player play method return a promise 
-        // don't anything for the first player to player 
-        if (element !== document) {
-          console.log("hehe element played", element);
-        }
+      return promise.then(function onFulfilled() {
         return player.play();
       });
-    }, Promise.resolve(document));
+    }, Promise.resolve());
   };
 
+  function Match(players) {
+    var _winner = null;
+    const _players = players;
+    Object.defineProperty(this, "winner",
+      {
+        get: function getWinner() { return _winner; },
+        set: function setWinner(winner) { _winner = winner; }
+      }
+    );
+    Object.defineProperty(this, "players",
+      {
+        get: function getPlayers() { return _players; }
+      });
+
+  }
+  Match.prototype.addSymbolToPlayer = function (player, symbol) {
+    player.addSymbol(symbol);
+  };
+  Match.prototype.end = function () {
+    // end if there is no more play opportunity for any player or another party 
+    // end if there is a winner 
+    // don't need winner variable , rather just promise that get resolve if any of 
+    // above condition get fullfilled 
+
+  };
+
+  Match.prototype.parties = function* parties() {
+    while (!this.winner) {
+      yield new Party(this.players);
+    }
+    return this.winner;
+  };
+
+  Match.prototype.gain = function gain() {
+    // check all win posibility for the last players 
+    // if win condition met set 
+    function getPosition(element) {
+      // i == 
+      const i = element.parentNode.indexof(element);
+      const j = gameBoard.indexof(element.parentNode);
+      return [i, j];
+    }
+    function checkLeft(poisiton) {
+
+    }
+    return null;
+  };
 
 
   // some tests
   var person = new Person();
   var computer = new Computer();
+  person.symbol = React.createElement("p", { children: "Person" }); // replace with font item 
+  computer.symbol = React.createElement("p", { children: "Computer" });
+  console.log(person);
 
   var myparty = new Party([person, computer]);
   myparty.run();
