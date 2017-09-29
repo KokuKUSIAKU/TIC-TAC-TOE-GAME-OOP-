@@ -128,6 +128,19 @@ import ReactDOM from "react-dom";
    *  a player to wrap any of its normal method into a promise 
   */
   Player.prototype = {
+    update: function () {
+      const ctx = this;
+      return this.select().then(function onFulfilled(element) {
+        var _p = new Promise(function resolver(res) {
+          render(
+            ctx.symbol,
+            element
+          );
+          res(element);
+        });
+        return _p;
+      });
+    },
     play: function play() {
       return this.update(this._gameboard, this._symbol); // big promise 
     }
@@ -141,21 +154,6 @@ import ReactDOM from "react-dom";
   function Computer() { }
   Computer.prototype = new Player;
   Computer.prototype.constructor = Computer;
-  Computer.prototype.update = function () {
-    //console.log("Comuter updating");
-    // now same code for person, move to Player object then ; 
-    const ctx = this;
-    return this.select().then(function onFulfilled(element) {
-      var _p = new Promise(function resolver(res) {
-        render(
-          ctx.symbol,
-          element
-        );
-        res(element);
-      });
-      return _p;
-    });
-  };
   Computer.prototype.select = function () {
     //const ctx = this; 
 
@@ -188,19 +186,6 @@ import ReactDOM from "react-dom";
   function Person() { }
   Person.prototype = new Player;
   Person.prototype.constructor = Person;
-  Person.prototype.update = function () {
-    const ctx = this;
-    return this.select().then(function onFulfilled(element) {
-      var _p = new Promise(function resolver(res) {
-        render(
-          ctx.symbol,
-          element
-        );
-        res(element);
-      });
-      return _p;
-    });
-  };
   Person.prototype.select = function () {
     return new Promise(function resolver(resolve) {
       function clickHandler(e) {
