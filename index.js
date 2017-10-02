@@ -7,20 +7,6 @@ import ReactDOM from "react-dom";
   var gameBoard = document.getElementById("app");
   var view;
 
-  function Observer() {
-    this.observers = [];
-  }
-
-  Observer.prototype.add = function (obj) {
-    return this.observers.push(obj);
-  };
-  Observer.prototype.notify = function (param) {
-    console.log("fired");
-    for (let i = 0; i < this.observers.length; i++) {
-      this.observers[i].update(param);
-    }
-  };
-
   view = (function GameView(dim = 3) {
     var _dim = dim;
 
@@ -123,10 +109,7 @@ import ReactDOM from "react-dom";
         get: function getSymbol() { return _symbol; }
       });
   }
-  /** think about moving update and select method into prototype which may be 
-   * a promise wraypper, event a promise wrapper should be a method of player that allow 
-   *  a player to wrap any of its normal method into a promise 
-  */
+
   Player.prototype = {
     update: function () {
       const ctx = this;
@@ -142,38 +125,32 @@ import ReactDOM from "react-dom";
       });
     },
     play: function play() {
-      return this.update(this._gameboard, this._symbol); // big promise 
+      return this.update(this._gameboard, this._symbol);
     }
   };
 
-  // you can mode the update function in the prototype chain 
-  // with the promise chain to uniform the process perfomed by each player when playing 
   /**
-   * 
-   *********************************************************/
+  * 
+  *********************************************************/
   function Computer() { }
   Computer.prototype = new Player;
   Computer.prototype.constructor = Computer;
   Computer.prototype.select = function () {
-    //const ctx = this; 
-
     return new Promise(function resolver(resolve) {
       var gameBoardButtons = [], index;
-
-      // a bit long all these children 
-      // cache this !!! 
+      // a bit long all these children !!! 
       Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
         Array.from(line.children).forEach(function gameCell(cell) {
           gameBoardButtons.push(cell.children);
         });
       });
 
+      //let us thrust the player here 
       while (!index) {
         let _index = parseInt(Math.random() * gameBoardButtons.length);
-        if (!gameBoardButtons[_index].children) { index = _index; }
+        if (!gameBoardButtons[_index][0].children[0]) { index = _index; }
       }
 
-      // insert a delay in the computer action 
       setTimeout(function personSelect() {
         resolve(gameBoardButtons[index][0]);
       }, 1000);
@@ -201,21 +178,17 @@ import ReactDOM from "react-dom";
    *
    */
 
-  // Party mediator between players 
+  /*
+   During a new party, each players can play once, if none realises a winning 
+   combinaison before last player
+   Party run method allow players to play alternately in the order provided by Match 
+  */
   function Party(players) {
     const _players = players;
     Object.defineProperty(this, "players",
       { get: function getPlayers() { return _players; } }
     );
   }
-  // ok valided 
-  Party.prototype.selectNextPlayer = function* selectNextPlayer() {
-    var _index = 0, _playerNumber = this.players.length;
-    while (_index < _playerNumber) {
-      yield this.players[_index];
-      _index += 1;
-    }
-  };
 
   Party.prototype.run = function runParty() {
     return this.players.reduce(function (promise, player) {
@@ -224,6 +197,12 @@ import ReactDOM from "react-dom";
       });
     }, Promise.resolve());
   };
+
+
+  /**
+   * 
+   * Match ; 
+   */
 
   function Match(players) {
     var _winner = null;
@@ -241,16 +220,8 @@ import ReactDOM from "react-dom";
 
   }
   Match.prototype.addSymbolToPlayer = function (player, symbol) {
-    player.addSymbol(symbol);
+    player.symbol = symbol;
   };
-  Match.prototype.end = function () {
-    // end if there is no more play opportunity for any player or another party 
-    // end if there is a winner 
-    // don't need winner variable , rather just promise that get resolve if any of 
-    // above condition get fullfilled 
-
-  };
-
   Match.prototype.parties = function* parties() {
     while (!this.winner) {
       yield new Party(this.players);
@@ -258,31 +229,26 @@ import ReactDOM from "react-dom";
     return this.winner;
   };
 
-  Match.prototype.gain = function gain() {
-    // check all win posibility for the last players 
-    // if win condition met set 
-    function getPosition(element) {
-      // i == 
-      const i = element.parentNode.indexof(element);
-      const j = gameBoard.indexof(element.parentNode);
-      return [i, j];
-    }
-    function checkLeft(poisiton) {
-
-    }
-    return null;
+  Match.prototype.run = function run() {
+    // 
+    const _match = this.parties();
+    var _sequence = _match.next().value.run();
+    // recursion to the rescue here to add then on demand, not as with reduce or for loop 
+    _sequence.then(function onFulfilled() {
+      //console.log(data);
+      // someone is right, promises are the vampires of programming except they don't know what is called sun !!!
+      return _match.next().value.run();
+    });
   };
 
 
-  // some tests
+  // some tests - coding continue 
   var person = new Person();
   var computer = new Computer();
   person.symbol = React.createElement("p", { children: "Person" }); // replace with font item 
   computer.symbol = React.createElement("p", { children: "Computer" });
-  console.log(person);
-
-  var myparty = new Party([person, computer]);
-  myparty.run();
+  var TICTACTOE = new Match([person, computer]);
+  TICTACTOE.run();
 
 })();
 
