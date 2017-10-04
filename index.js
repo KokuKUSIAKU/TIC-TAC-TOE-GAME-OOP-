@@ -115,6 +115,7 @@ import ReactDOM from "react-dom";
       const ctx = this;
       return this.select().then(function onFulfilled(element) {
         var _p = new Promise(function resolver(res) {
+
           render(
             ctx.symbol,
             element
@@ -183,17 +184,27 @@ import ReactDOM from "react-dom";
    combinaison before last player
    Party run method allow players to play alternately in the order provided by Match 
   */
-  function Party(players) {
+
+  // Party know too much details about players and Match 
+  // it should simple run a list of functions and checking outcome after
+  // each function excution and decide if ok to continue or not 
+  // en some return player().then et non player.play().then
+  // event more, party can simply extends the players round till there 
+  // any stop condition is met by rules and return to it caller the result; 
+  
+  function Party(players, rules) {
     const _players = players;
-    Object.defineProperty(this, "players",
-      { get: function getPlayers() { return _players; } }
-    );
+    const _rules = rules;
+    console.log(_rules);
+    Object.defineProperty(this, "players", { get: function getPlayers() { return _players; } });
+    Object.defineProperty(this, "rules", { get: function getRules() { return _rules; } });
   }
 
   Party.prototype.run = function runParty() {
+    const ctx = this; 
     return this.players.reduce(function (promise, player) {
       return promise.then(function onFulfilled() {
-        return player.play();
+        return player.play().then(element => ctx.rules.check(element));
       });
     }, Promise.resolve());
   };
@@ -207,41 +218,66 @@ import ReactDOM from "react-dom";
   function Match(players) {
     var _winner = null;
     const _players = players;
-    Object.defineProperty(this, "winner",
-      {
-        get: function getWinner() { return _winner; },
-        set: function setWinner(winner) { _winner = winner; }
-      }
-    );
-    Object.defineProperty(this, "players",
-      {
-        get: function getPlayers() { return _players; }
-      });
-
+    Object.defineProperty(this, "winner", {
+      get: function getWinner() { return _winner; },
+      set: function setWinner(winner) { _winner = winner; }
+    });
+    Object.defineProperty(this, "players", { get: function getPlayers() { return _players; } });
   }
   Match.prototype.addSymbolToPlayer = function (player, symbol) {
     player.symbol = symbol;
   };
+  Match.prototype.controller = function controller() {
+    // copy from computer, now for dev, factorise later; 
+    var gameBoardButtons = [];
+    // a bit long all these children !!! 
+    Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
+      Array.from(line.children).forEach(function gameCell(cell) {
+        gameBoardButtons.push(cell.children);
+      });
+    });
+
+    
+  }; 
+
   Match.prototype.parties = function* parties() {
+    let _number = 0;
     while (!this.winner) {
-      yield new Party(this.players);
+      yield new Party(this.players, {check:function() { console.log("check rules");}});
+      if (_number == 1) { this.winner = true; }
+      console.log(_number, this.winner);
+      _number++;
+
     }
     return this.winner;
   };
 
+  // messing, need review & refactorisation !!!! 
+  // check the stack !!
   Match.prototype.run = function run() {
-    // 
-    const _match = this.parties();
-    var _sequence = _match.next().value.run();
-    // recursion to the rescue here to add then on demand, not as with reduce or for loop 
-    _sequence.then(function onFulfilled() {
-      //console.log(data);
-      // someone is right, promises are the vampires of programming except they don't know what is called sun !!!
-      return _match.next().value.run();
-    });
+    var _parties = this.parties();
+    function runParties({ value, done }) {
+      if (done) return Promise.resolve({ value, done }).then(() => console.log("Match finished"));
+      return Promise.resolve({ value, done }).then(function onFulfilled(res) {
+        // run the party to end and move the next 
+        // exception on unused variable (prev here)!
+        // find a way that res.value.run can be rejected by Match itself if a player wins!!
+        return Promise.all([res.value.run(), _parties.next(res)]).then(([prev, next]) => runParties(next));
+      }).catch(function onrejected(reason) {
+        // catch side not tested yet at all !!
+        return runParties(_parties.throw(reason));
+      });
+
+    }
+
+    try {
+      return runParties(_parties.next());
+    } catch (err) {
+      return Promise.reject(err);
+    }
+
   };
-
-
+  
   // some tests - coding continue 
   var person = new Person();
   var computer = new Computer();
@@ -249,6 +285,44 @@ import ReactDOM from "react-dom";
   computer.symbol = React.createElement("p", { children: "Computer" });
   var TICTACTOE = new Match([person, computer]);
   TICTACTOE.run();
+
+  /*
+Game.prototype.lineTest = function(player){
+  // check if the player has  aligned 3 symbol horizontally
+  if(this.table[player.position.line].join('')==player.symbol.repeat(this.dim)){
+    player.attribute =this.state.win;
+  }
+};
+
+Game.prototype.columnTest = function(player){
+  // check if the player has  aligned 3 symbol vertically
+var columnIndex = player.position.column;  
+if(this.table[0][columnIndex]!="0" && this.table[0][columnIndex]==this.table[1][columnIndex] && this.table[0][columnIndex]==this.table[2]   [columnIndex]){
+    player.attribute =this.state.win;
+  }
+};
+
+Game.prototype.positiveDiagonalTest = function(player){
+  // check if the player has  aligned 3 symbol diagonally (first)
+  if(player.position.line==player.position.column) {
+   
+       if (this.table[0][0]!="0" && this.table[0][0]==this.table[1][1] && this.table[1][1]==this.table[2][2]) {
+           player.attribute =this.state.win;
+       }
+   }
+};
+
+Game.prototype.negativeDiagonalTest = function(player){
+  // check if the player has  aligned 3 symbol diagonally (second) 
+   if(player.position.line==2-player.position.column) {
+     
+      if (this.table[0][2]!="0" && this.table[0][2]==this.table[1][1] && this.table[2][0]==this.table[1][1]){
+         player.attribute =this.state.win;
+    }
+  }
+};
+
+  */
 
 })();
 
