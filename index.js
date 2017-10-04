@@ -100,8 +100,7 @@ import ReactDOM from "react-dom";
   *    PLAYERS 
   */
 
-  function Player() {
-    // there is no control on symbol; make sure to assign a valid react component as symbol; 
+  function Player() { 
     var _symbol = "";
     Object.defineProperty(this, "symbol",
       {
@@ -139,14 +138,11 @@ import ReactDOM from "react-dom";
   Computer.prototype.select = function () {
     return new Promise(function resolver(resolve) {
       var gameBoardButtons = [], index;
-      // a bit long all these children !!! 
       Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
         Array.from(line.children).forEach(function gameCell(cell) {
           gameBoardButtons.push(cell.children);
         });
       });
-
-      //let us thrust the player here 
       while (!index) {
         let _index = parseInt(Math.random() * gameBoardButtons.length);
         if (!gameBoardButtons[_index][0].children[0]) { index = _index; }
@@ -179,23 +175,9 @@ import ReactDOM from "react-dom";
    *
    */
 
-  /*
-   During a new party, each players can play once, if none realises a winning 
-   combinaison before last player
-   Party run method allow players to play alternately in the order provided by Match 
-  */
-
-  // Party know too much details about players and Match 
-  // it should simple run a list of functions and checking outcome after
-  // each function excution and decide if ok to continue or not 
-  // en some return player().then et non player.play().then
-  // event more, party can simply extends the players round till there 
-  // any stop condition is met by rules and return to it caller the result; 
-  
   function Party(players, rules) {
     const _players = players;
     const _rules = rules;
-    console.log(_rules);
     Object.defineProperty(this, "players", { get: function getPlayers() { return _players; } });
     Object.defineProperty(this, "rules", { get: function getRules() { return _rules; } });
   }
@@ -228,16 +210,12 @@ import ReactDOM from "react-dom";
     player.symbol = symbol;
   };
   Match.prototype.controller = function controller() {
-    // copy from computer, now for dev, factorise later; 
     var gameBoardButtons = [];
-    // a bit long all these children !!! 
     Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
       Array.from(line.children).forEach(function gameCell(cell) {
         gameBoardButtons.push(cell.children);
       });
     });
-
-    
   }; 
 
   Match.prototype.parties = function* parties() {
@@ -245,7 +223,6 @@ import ReactDOM from "react-dom";
     while (!this.winner) {
       yield new Party(this.players, {check:function() { console.log("check rules");}});
       if (_number == 1) { this.winner = true; }
-      console.log(_number, this.winner);
       _number++;
 
     }
@@ -259,12 +236,8 @@ import ReactDOM from "react-dom";
     function runParties({ value, done }) {
       if (done) return Promise.resolve({ value, done }).then(() => console.log("Match finished"));
       return Promise.resolve({ value, done }).then(function onFulfilled(res) {
-        // run the party to end and move the next 
-        // exception on unused variable (prev here)!
-        // find a way that res.value.run can be rejected by Match itself if a player wins!!
         return Promise.all([res.value.run(), _parties.next(res)]).then(([prev, next]) => runParties(next));
       }).catch(function onrejected(reason) {
-        // catch side not tested yet at all !!
         return runParties(_parties.throw(reason));
       });
 
@@ -281,48 +254,10 @@ import ReactDOM from "react-dom";
   // some tests - coding continue 
   var person = new Person();
   var computer = new Computer();
-  person.symbol = React.createElement("p", { children: "Person" }); // replace with font item 
+  person.symbol = React.createElement("p", { children: "Person" }); 
   computer.symbol = React.createElement("p", { children: "Computer" });
   var TICTACTOE = new Match([person, computer]);
   TICTACTOE.run();
-
-  /*
-Game.prototype.lineTest = function(player){
-  // check if the player has  aligned 3 symbol horizontally
-  if(this.table[player.position.line].join('')==player.symbol.repeat(this.dim)){
-    player.attribute =this.state.win;
-  }
-};
-
-Game.prototype.columnTest = function(player){
-  // check if the player has  aligned 3 symbol vertically
-var columnIndex = player.position.column;  
-if(this.table[0][columnIndex]!="0" && this.table[0][columnIndex]==this.table[1][columnIndex] && this.table[0][columnIndex]==this.table[2]   [columnIndex]){
-    player.attribute =this.state.win;
-  }
-};
-
-Game.prototype.positiveDiagonalTest = function(player){
-  // check if the player has  aligned 3 symbol diagonally (first)
-  if(player.position.line==player.position.column) {
-   
-       if (this.table[0][0]!="0" && this.table[0][0]==this.table[1][1] && this.table[1][1]==this.table[2][2]) {
-           player.attribute =this.state.win;
-       }
-   }
-};
-
-Game.prototype.negativeDiagonalTest = function(player){
-  // check if the player has  aligned 3 symbol diagonally (second) 
-   if(player.position.line==2-player.position.column) {
-     
-      if (this.table[0][2]!="0" && this.table[0][2]==this.table[1][1] && this.table[2][0]==this.table[1][1]){
-         player.attribute =this.state.win;
-    }
-  }
-};
-
-  */
 
 })();
 
