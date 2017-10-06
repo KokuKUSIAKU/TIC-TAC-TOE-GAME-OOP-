@@ -1,4 +1,10 @@
-// this script is overheaded intentionnally !!
+
+// Hello Welcome to my Tic-Tac-Toe Game code
+// Couple of things: 
+// 1 - It is not built following any Game development standards, just having great fun with Javascript
+// 2 - It is overkill intentionnally in many ways probably.
+// 3 - Any comment on efficiency or perfomance issues not about the game but about JS is very welcome 
+
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -91,6 +97,49 @@ import ReactDOM from "react-dom";
       </table>,
       gameBoard
     );
+    /**
+     * @function update
+     * @param {*} target DOM node , actually to cell to update with the player symbol
+     * @param {*} element DOM node to be appended to target 
+     */
+    function update(parent, childElement) {
+      render(
+        childElement,
+        parent
+      );
+    }
+    function callController(controller, e) {
+      return controller(e.target);
+    }
+
+    function addClickEvent() {
+      return gameBoard.addEventListener("click", callController, { once: true });
+    }
+
+    // all this need optimisation, caching,
+    function _indexOf(target) {
+      var gameBoardButtons = Array.from(gameBoard.children[0].children[0].children);
+      var ln = gameBoardButtons.length;
+      for (let index in gameBoardButtons) {
+        for (let td of gameBoardButtons[index].children) {
+          if (td.children[0] == target) {
+            return index * ln + Array.from(gameBoardButtons[index].children).indexOf(td);
+          }
+        }
+      }
+      return -1;
+    }
+    function _length() {
+      return _dim * 2;
+    }
+
+
+    return {
+      update: update,
+      addClickEvent: addClickEvent,
+      _indexOf: _indexOf,
+      _length: _length
+    };
 
   })();
 
@@ -109,24 +158,11 @@ import ReactDOM from "react-dom";
         get: function getSymbol() { return _symbol; }
       });
   }
-
   Player.prototype = {
-    update: function () {
-      const ctx = this;
-      return this.select().then(function onFulfilled(element) {
-        var _p = new Promise(function resolver(res) {
-
-          render(
-            ctx.symbol,
-            element
-          );
-          res(element);
-        });
-        return _p;
-      });
-    },
     play: function play() {
-      return this.update(this._gameboard, this._symbol);
+      return this.select().then(function onFulfilled(target) {
+        return Promise.resolve(target.position);
+      });
     }
   };
 
@@ -138,22 +174,8 @@ import ReactDOM from "react-dom";
   Computer.prototype.constructor = Computer;
   Computer.prototype.select = function () {
     return new Promise(function resolver(resolve) {
-      var gameBoardButtons = [], index;
-      // a bit long all these children !!! 
-      Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
-        Array.from(line.children).forEach(function gameCell(cell) {
-          gameBoardButtons.push(cell.children);
-        });
-      });
-
-      //let us thrust the player here 
-      while (!index) {
-        let _index = parseInt(Math.random() * gameBoardButtons.length);
-        if (!gameBoardButtons[_index][0].children[0]) { index = _index; }
-      }
-
       setTimeout(function personSelect() {
-        resolve(gameBoardButtons[index][0]);
+        resolve({ position: parseInt(Math.random() * view._length()) });
       }, 1000);
     });
   };
@@ -167,31 +189,16 @@ import ReactDOM from "react-dom";
   Person.prototype.select = function () {
     return new Promise(function resolver(resolve) {
       function clickHandler(e) {
+        e.target.position = view._indexOf(e.target);
         resolve(e.target);
       }
       gameBoard.addEventListener("click", clickHandler, { once: true });
     });
   };
 
-  /*
-   *
+  /****************************************
    * Match and Party
-   *
-   */
-
-  /*
-   During a new party, each players can play once, if none realises a winning 
-   combinaison before last player
-   Party run method allow players to play alternately in the order provided by Match 
-  */
-
-  // Party know too much details about players and Match 
-  // it should simple run a list of functions and checking outcome after
-  // each function excution and decide if ok to continue or not 
-  // en some return player().then et non player.play().then
-  // event more, party can simply extends the players round till there 
-  // any stop condition is met by rules and return to it caller the result; 
-  
+   ***************************************/
   function Party(players, rules) {
     const _players = players;
     const _rules = rules;
@@ -201,13 +208,44 @@ import ReactDOM from "react-dom";
   }
 
   Party.prototype.run = function runParty() {
-    const ctx = this; 
+    const ctx = this;
     return this.players.reduce(function (promise, player) {
       return promise.then(function onFulfilled() {
-        return player.play().then(element => ctx.rules.check(element));
+        return ctx.controller(player);
       });
     }, Promise.resolve());
   };
+
+  Party.prototype.controller = function controlParty(currentPlayer) {
+    var ctx = this;
+    return currentPlayer.play().then(function onFulfilled(position) {
+      return ctx.validator(position).then(function onFulfilled(node) {
+        view.update(node, currentPlayer.symbol);
+        return Promise.resolve(position); // need to wait till this resolved
+      }, function onFulfilled() {
+        return controlParty(currentPlayer); // need to wait till this resolved
+      });
+    });
+  };
+
+  Party.prototype.validator = function valide(position) {
+    var gameBoardButtons = [];
+    Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
+      Array.from(line.children).forEach(function gameCell(cell) {
+        gameBoardButtons.push(cell.children);
+      });
+    });
+
+    if (!gameBoardButtons[position][0].children[0]) {
+      return Promise.resolve(gameBoardButtons[position][0]);
+    }
+    else {
+      return Promise.reject(position);
+    }
+  };
+
+
+
 
 
   /**
@@ -230,20 +268,22 @@ import ReactDOM from "react-dom";
   Match.prototype.controller = function controller() {
     // copy from computer, now for dev, factorise later; 
     var gameBoardButtons = [];
-    // a bit long all these children !!! 
+    // a bit long all these children !!! -move this to a function and cached it !
     Array.from(gameBoard.children[0].children[0].children).forEach(function gameLine(line) {
       Array.from(line.children).forEach(function gameCell(cell) {
         gameBoardButtons.push(cell.children);
       });
     });
 
-    
-  }; 
+    // need robust iterator here 
+
+
+  };
 
   Match.prototype.parties = function* parties() {
     let _number = 0;
     while (!this.winner) {
-      yield new Party(this.players, {check:function() { console.log("check rules");}});
+      yield new Party(this.players, { check: function () { console.log("check rules"); } });
       if (_number == 1) { this.winner = true; }
       console.log(_number, this.winner);
       _number++;
@@ -259,12 +299,8 @@ import ReactDOM from "react-dom";
     function runParties({ value, done }) {
       if (done) return Promise.resolve({ value, done }).then(() => console.log("Match finished"));
       return Promise.resolve({ value, done }).then(function onFulfilled(res) {
-        // run the party to end and move the next 
-        // exception on unused variable (prev here)!
-        // find a way that res.value.run can be rejected by Match itself if a player wins!!
         return Promise.all([res.value.run(), _parties.next(res)]).then(([prev, next]) => runParties(next));
       }).catch(function onrejected(reason) {
-        // catch side not tested yet at all !!
         return runParties(_parties.throw(reason));
       });
 
@@ -277,7 +313,7 @@ import ReactDOM from "react-dom";
     }
 
   };
-  
+
   // some tests - coding continue 
   var person = new Person();
   var computer = new Computer();
