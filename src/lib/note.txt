@@ -1,7 +1,0 @@
-  createArray function, test perfomance in case of large dimension array!
-  
-  // alternative synthax, quid perfomance 
-  /*
-  return (new Array(dim)).fill(React.createElement()).map((val, index)=> val.props.children.push(React.createElement()))
-  return (new Array(dim)).fill(dim).map( (val, index)=>React.createElement(parent, {props}, Reacte.create(component)))
-  */
