@@ -39,15 +39,15 @@ function PartyMediator() {
     });
   Object.defineProperty(this, "validator",
     {
-      get: function setValidator() { return _participants.validator; }
+      get: function getValidator() { return _participants.validator; }
     });
   Object.defineProperty(this, "view",
     {
-      get: function setView() { return _participants.view; }
+      get: function getView() { return _participants.view; }
     });
   Object.defineProperty(this, "referee",
     {
-      get: function setReferee() { return _participants.referee; }
+      get: function getReferee() { return _participants.referee; }
     });
   Object.defineProperty(this, "add",
     {
