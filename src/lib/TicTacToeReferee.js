@@ -2,68 +2,31 @@ import Validator from "./Validator";
 
 var count = 3;
 var TicTacToeReferee = new Validator();
-TicTacToeReferee.rules = [lineTest, columnTest];
+TicTacToeReferee.rules = [columnTest,lineTest];
 
-function lineTest(position) {
-
-  function checkRight({ target }) {
-    var index = 1;
-    var node = target.parentNode;
-    var html = node.innerHTML;
-    while (node && index < count) {
-      node = node.nextSibling;
-      if (!node || node.innerHTML != html) { return false; }
-      index++;
-    }
-    return true;
+function lineTest({column, target }) {
+  var td = target.parentNode; 
+  var cells = Array.from(td.parentNode.children).slice(column - count < 0 ? 0 : column - count + 1, column + count);
+  var checkList = [];
+  var ln = cells.length;
+  for (let i = 0; i <= ln - count; i++) {
+    checkList.push(cells.slice(i, i + count));
   }
-
-  function checkLeft({ target }) {
-    var index = 1;
-    var node = target.parentNode;
-    var html = node.innerHTML;
-    while (node && index < count) {
-      node = node.previousSibling;
-      if (!node || node.innerHTML != html) { return false; }
-      index++;
-    }
-    return true;
-  }
-  return checkLeft(position) || checkRight(position);
+  return !checkList.some( list => list.every( content => content.innerHTML === td.innerHTML));
 }
 
-function columnTest(position) {
-
-  function checkDown({ column, target }) {
-    var td = target.parentNode;
-    var html = td.innerHTML;
-    var row_ = td.parentNode;
-    var index = 1;
-
-    while (row_ && index < count) {
-      row_ = row_.nextSibling;
-      if (!row_|| row_.children[column].innerHTML != html) { return false; }
-      index++;
-    }
-    return true;
+function columnTest({row, column, target}) {
+  var checkList = [];
+  var ln ; 
+  var td = target.parentNode; 
+  var table = td.parentNode.parentNode; 
+  var cells  = (Array.from(table.children)).map( _row => _row.children[column]); 
+  cells = cells.slice(row - count < 0 ? 0 : row - count + 1, row + count);
+  ln  = cells.length;
+  for (let i = 0; i <= ln - count; i++) {
+    checkList.push(cells.slice(i, i + count));
   }
-
-  function checkUp({ column, target }) {
-    var td = target.parentNode;
-    var html = td.innerHTML;
-    var row_ = td.parentNode;
-    var index = 1;
-
-    while (row_ && index < count) {
-      row_ = row_.previousSibling;
-      if (!row_|| row_.children[column].innerHTML != html) { return false; }
-      index++;
-    }
-    return true;
-  }
-
-  return checkDown(position) || checkUp(position);
-
+  return !checkList.some( list => list.every( content => content.innerHTML === td.innerHTML));
 }
 
 function pDiagonalTest(player) {

@@ -30,7 +30,7 @@ Validator.prototype.send = function send(message, receiver) {
 }; 
 
 Validator.prototype.check = function check(rules, position) {
-  console.log("rules", rules);
+ // console.log("rules", rules);
   return rules.every(rule => rule(position[0]));
 };
 Validator.prototype.VALIDATE = function validate(position) {

@@ -31,7 +31,6 @@ import TicTacToeReferee from "./src/lib/TicTacToeReferee";
   computer.registerMediator(Mediator);
   TicTacToeValidator.registerMediator(Mediator);
   TicTacToeReferee.registerMediator(Mediator);
-  //console.log(TicTacToeReferee.rules);
 
   Mediator.add = { type: "PLAYER", participant: person };
   Mediator.add = { type: "PLAYER", participant: computer };
@@ -39,10 +38,9 @@ import TicTacToeReferee from "./src/lib/TicTacToeReferee";
   Mediator.add = { type: "REFEREE", participant: TicTacToeReferee };
   Mediator.add = { type: "VIEW", participant: gameView };
 
-  person.symbol = React.createElement("p", { children: "Person" }); // replace with font item 
-  computer.symbol = React.createElement("p", { children: "Computer" });
+  person.symbol = React.createElement("i", { className: "fa fa-asterisk", "aria-hidden": "true" });
+  computer.symbol = React.createElement("i", { className: "fa fa-dot-circle-o", "aria-hidden": "true" });;
 
   Mediator.init();
-
 
 })();

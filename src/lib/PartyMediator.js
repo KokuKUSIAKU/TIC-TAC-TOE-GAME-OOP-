@@ -3,6 +3,7 @@ import gameBoard from "./gameBoard";
 /****************************************
  * Match and PartyMediator
  ***************************************/
+const PLAY_LIMIT = 9; // just for 3x3 board now 
 
 const MESSAGE = {
   PLAY: "PLAY",
@@ -17,6 +18,7 @@ const MESSAGE = {
 
 function PartyMediator() {
   var _currentPlayer = null;
+  this.count = 1; 
   var _participants = {
     players: [],
     first: null,
@@ -94,18 +96,25 @@ PartyMediator.prototype.receive = function (message, from) {
     let nextIndex;
     switch (message) {
 
-      case MESSAGE.ACCEPT: // if current player realise  winning combinaison, opposite is reject below
+      case MESSAGE.REJECT: // if current player realise  winning combinaison, opposite is reject below
         console.log("accept message");
+          console.log(this.currentPlayer);
+         alert(this.currentPlayer.name, "wins, Bravo!");
 
         break;
-      case MESSAGE.REJECT:
+      case MESSAGE.ACCEPT:
         nextIndex = this.players.indexOf(this.currentPlayer);
         if (nextIndex < this.players.length - 1) {
           this.currentPlayer = this.players[nextIndex + 1];
         } else {
           this.currentPlayer = this.firstPlayer;
         }
-        this.send(MESSAGE.PLAY, this.currentPlayer);
+        this.count ++;
+        console.log(this.count);
+        if (this.count < PLAY_LIMIT) {
+          this.send(MESSAGE.PLAY, this.currentPlayer);
+        }
+        
         break;
     }
   }
