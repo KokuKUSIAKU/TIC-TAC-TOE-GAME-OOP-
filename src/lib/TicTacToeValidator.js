@@ -1,5 +1,5 @@
 import Validator from "./Validator"; 
-
+// work here on state istead of dom 
 function hasNoChildNodes({target}) {
   return !target.hasChildNodes();
 }
