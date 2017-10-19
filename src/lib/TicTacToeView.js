@@ -1,18 +1,22 @@
 /* eslint-disable*/
 import React from "react";
 import ReactDOM from "react-dom";
-import Table from "./Table";
-import gameBoard from "./gameBoard";
+import { Provider } from "react-redux";
+import TableBoard from "../view/TableBoard";
+import store from "../state/state";
 /* eslint-enable */
+var gameBoard = document.getElementById("app"); 
 
 function tictactoeView() {
 
   var { render } = ReactDOM;
   var view = (function GameView(dim = 3) {
     var _dim = dim;
-
+    
     render(
-      <Table dim={dim} />,
+      <Provider store={store}>
+        <TableBoard />
+      </Provider>,
       gameBoard
     );
 
