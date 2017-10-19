@@ -5,14 +5,12 @@
 // 3 - Any comment on efficiency or perfomance issues not about the game but about JS is very welcome 
 
 import React from "react";
-import ReactDOM from "react-dom";
 import tictactoeView from "./src/lib/TicTacToeView";
-import { Person, Computer, Player } from "./src/lib/Player";
-import gameBoard from "./src/lib/gameBoard";
+import { Person, Computer} from "./src/lib/Player";
 import PartyMediator from "./src/lib/PartyMediator";
 import TicTacToeValidator from "./src/lib/TicTacToeValidator";
 import TicTacToeReferee from "./src/lib/TicTacToeReferee";
-
+var gameBoard = document.getElementById("app"); 
 (function () {
 
   var gameView = tictactoeView();
@@ -39,7 +37,7 @@ import TicTacToeReferee from "./src/lib/TicTacToeReferee";
   Mediator.add = { type: "VIEW", participant: gameView };
 
   person.symbol = React.createElement("i", { className: "fa fa-asterisk", "aria-hidden": "true" });
-  computer.symbol = React.createElement("i", { className: "fa fa-dot-circle-o", "aria-hidden": "true" });;
+  computer.symbol = React.createElement("i", { className: "fa fa-dot-circle-o", "aria-hidden": "true" });
 
   Mediator.init();
 

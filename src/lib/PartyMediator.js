@@ -1,4 +1,5 @@
-import gameBoard from "./gameBoard";
+import update from "../state/update";
+import store from "../state/state"; 
 
 /****************************************
  * Match and PartyMediator
@@ -18,7 +19,7 @@ const MESSAGE = {
 
 function PartyMediator() {
   var _currentPlayer = null;
-  this.count = 1; 
+  this.count = 1;
   var _participants = {
     players: [],
     first: null,
@@ -98,8 +99,8 @@ PartyMediator.prototype.receive = function (message, from) {
 
       case MESSAGE.REJECT: // if current player realise  winning combinaison, opposite is reject below
         console.log("accept message");
-          console.log(this.currentPlayer);
-         alert(this.currentPlayer.name, "wins, Bravo!");
+        console.log(this.currentPlayer);
+        alert(this.currentPlayer.name, "wins, Bravo!");
 
         break;
       case MESSAGE.ACCEPT:
@@ -109,12 +110,11 @@ PartyMediator.prototype.receive = function (message, from) {
         } else {
           this.currentPlayer = this.firstPlayer;
         }
-        this.count ++;
-        console.log(this.count);
+        this.count++;
         if (this.count < PLAY_LIMIT) {
           this.send(MESSAGE.PLAY, this.currentPlayer);
         }
-        
+
         break;
     }
   }
@@ -122,7 +122,10 @@ PartyMediator.prototype.receive = function (message, from) {
   else if (from === this.validator) {
     switch (message) {
       case MESSAGE.ACCEPT:
-        this.view.update(arguments[2][0].target, this.currentPlayer.symbol);
+        //this.view.update(arguments[2][0].target, this.currentPlayer.symbol);
+        var { row, column } = arguments[2][0];
+        var Node = this.currentPlayer.symbol;
+        store.dispatch(update({ row, column, Node }));
         this.send(MESSAGE.VALIDATE, this.referee, arguments[2][0]);
         break;
       case MESSAGE.REJECT:

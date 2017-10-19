@@ -1,5 +1,7 @@
-import gameBoard from "./gameBoard";
+
 import { MESSAGE } from "./PartyMediator";
+
+var gameBoard = document.getElementById("app"); 
 
 function Player() {
 
