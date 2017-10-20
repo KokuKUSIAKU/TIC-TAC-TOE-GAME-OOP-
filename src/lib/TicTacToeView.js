@@ -3,21 +3,27 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
 import TableBoard from "../view/TableBoard";
+import StartButton from "../view/StartButton";
 import store from "../state/state";
 /* eslint-enable */
-var gameBoard = document.getElementById("app"); 
-
+var gameBoard = document.getElementById("app");
+var start  = document.getElementById("start"); 
 function tictactoeView() {
 
   var { render } = ReactDOM;
   var view = (function GameView(dim = 3) {
     var _dim = dim;
-    
+
     render(
       <Provider store={store}>
         <TableBoard />
       </Provider>,
       gameBoard
+    );
+
+    render(
+      <StartButton/>,
+      start
     );
 
     /**
