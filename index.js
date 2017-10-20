@@ -6,13 +6,15 @@
 
 import React from "react";
 import tictactoeView from "./src/lib/TicTacToeView";
-import { Person, Computer} from "./src/lib/Player";
+import { Person, Computer } from "./src/lib/Player";
 import PartyMediator from "./src/lib/PartyMediator";
 import TicTacToeValidator from "./src/lib/TicTacToeValidator";
 import TicTacToeReferee from "./src/lib/TicTacToeReferee";
-var gameBoard = document.getElementById("app"); 
-(function () {
+var gameBoard = document.getElementById("app");
 
+
+(function () {
+  var start;
   var gameView = tictactoeView();
   var person = new Person();
   var computer = new Computer();
@@ -30,15 +32,23 @@ var gameBoard = document.getElementById("app");
   TicTacToeValidator.registerMediator(Mediator);
   TicTacToeReferee.registerMediator(Mediator);
 
-  Mediator.add = { type: "PLAYER", participant: person };
-  Mediator.add = { type: "PLAYER", participant: computer };
-  Mediator.add = { type: "VALIDATOR", participant: TicTacToeValidator };
-  Mediator.add = { type: "REFEREE", participant: TicTacToeReferee };
-  Mediator.add = { type: "VIEW", participant: gameView };
+  // remove cyclic dependency regarding participant objects
+  Mediator.addParticipants({
+    0: { type: "PLAYER", participant: person },
+    1: { type: "PLAYER", participant: computer },
+    2: { type: "VALIDATOR", participant: TicTacToeValidator },
+    3: { type: "REFEREE", participant: TicTacToeReferee },
+    4: { type: "VIEW", participant: gameView }
+  });
 
   person.symbol = React.createElement("i", { className: "fa fa-asterisk", "aria-hidden": "true" });
   computer.symbol = React.createElement("i", { className: "fa fa-dot-circle-o", "aria-hidden": "true" });
 
-  Mediator.init();
+  // move to view logic 
+  function startButtonClickHandler() {
+    Mediator.init();
+  }
+  start = document.getElementById("start");
+  start.addEventListener("click", startButtonClickHandler, { once: true });
 
 })();

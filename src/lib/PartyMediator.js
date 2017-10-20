@@ -1,5 +1,5 @@
 import update from "../state/update";
-import store from "../state/state"; 
+import store from "../state/state";
 
 /****************************************
  * Match and PartyMediator
@@ -52,7 +52,7 @@ function PartyMediator() {
     });
   Object.defineProperty(this, "add",
     {
-      set: function addParticipants({ type, participant }) {
+      set: function addParticipant({ type, participant }) {
         switch (type) {
           case "PLAYER":
             _participants.players.push(participant);
@@ -86,6 +86,14 @@ function PartyMediator() {
       }
     });
 }
+
+PartyMediator.prototype.addParticipants = function add(participants) {
+  console.log(participants);
+  for (let key in participants) {
+    this.add = participants[key];
+  }
+  //this.add = participant; 
+};
 
 PartyMediator.prototype.send = function (message, receiver) {
   receiver.excute(message, [].slice.call(arguments, 2));
