@@ -18,7 +18,6 @@ var gameBoard = document.getElementById("app");
   var gameView = tictactoeView();
   var person = new Person();
   var computer = new Computer();
-
   // person and computer join the same game but, 
   // person hold the DOM Object while compute hold the game view object
   // to have necessary functionalities
@@ -27,12 +26,10 @@ var gameBoard = document.getElementById("app");
 
   var tictactoeMediator = new PartyMediator();
   var Mediator = tictactoeMediator;
-  person.registerMediator(Mediator);
-  computer.registerMediator(Mediator);
-  TicTacToeValidator.registerMediator(Mediator);
-  TicTacToeReferee.registerMediator(Mediator);
 
-  // remove cyclic dependency regarding participant objects
+  person.symbol = React.createElement("i", { className: "fa fa-asterisk", "aria-hidden": "true" });
+  computer.symbol = React.createElement("i", { className: "fa fa-dot-circle-o", "aria-hidden": "true" });
+
   Mediator.addParticipants({
     0: { type: "PLAYER", participant: person },
     1: { type: "PLAYER", participant: computer },
@@ -40,9 +37,6 @@ var gameBoard = document.getElementById("app");
     3: { type: "REFEREE", participant: TicTacToeReferee },
     4: { type: "VIEW", participant: gameView }
   });
-
-  person.symbol = React.createElement("i", { className: "fa fa-asterisk", "aria-hidden": "true" });
-  computer.symbol = React.createElement("i", { className: "fa fa-dot-circle-o", "aria-hidden": "true" });
 
   // move to view logic 
   function startButtonClickHandler() {
